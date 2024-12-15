@@ -3,6 +3,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Day2RedNosedReport {
     final static Path inputFile = Paths.get("resources/day-2-input.txt");
@@ -12,46 +14,33 @@ public class Day2RedNosedReport {
             var reports = Files.readAllLines(inputFile);
             var safeReportsCount = 0;
             for (String report : reports) {
-                var levels = report.split(" ");
-
-                System.out.println("levels: " + Arrays.toString(levels));
-
-                var isSafe = true;
-
-                var isIncreasing = asInt(levels[0]) < asInt(levels[levels.length - 1]);
-
-                System.err.println("Is increasing: " + isIncreasing);
-
-                // check if all elements are from the same sign (positive or negative instead of
-                // use isIncreasing var)
-                // if a report if unsafe try an iteration remove each element to check if one of
-                // then are safe
-
-                for (int i = 0; i < levels.length; i++) {
-                    if (i >= levels.length - 1) {
-                        break;
-                    }
-
-                    if (isIncreasing) {
-                        if (asInt(levels[i]) > asInt(levels[i + 1])
-                                || (asInt(levels[i + 1]) - asInt(levels[i]) > 3)
-                                || asInt(levels[i]) == asInt(levels[i + 1])) {
-                            isSafe = false;
-                            break;
-                        }
-                    } else {
-                        if (asInt(levels[i]) < asInt(levels[i + 1])
-                                || (asInt(levels[i]) - asInt(levels[i + 1]) > 3)
-                                || asInt(levels[i]) == asInt(levels[i + 1])) {
-                            isSafe = false;
-                            break;
-                        }
-                    }
-                }
-                System.err.println("Is safe:" + isSafe);
-                if (isSafe) {
+                List<Integer> levels = Arrays.stream(report.split(" "))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList());
+                System.err.println("Levels: " + levels);
+                var results = getReportResults(levels);
+                System.err.println("Results: " + results);
+                var isSafe = isReportSafe(results);
+                System.err.println("Is safe: " + isSafe);
+                if (isSafe){
                     safeReportsCount += 1;
+                } else {
+                    for (int i = 0; i < levels.size(); i++){
+                        // var newResults = new ArrayList<>(results);
+                        var levelsCopy = new ArrayList<>(levels);
+                        levelsCopy.remove(i);
+                        var newResults = getReportResults(levelsCopy);
+                        System.err.println("I: " + i);
+                        System.err.println("New results: " + newResults);
+                        var isNewResultSafe = isReportSafe(newResults);
+                        System.err.println("Is new safe: " + isNewResultSafe);
+                        if (isNewResultSafe){
+                            safeReportsCount += 1;
+                            break;
+                        }
+                    }                    
                 }
+                
             }
             System.out.println(safeReportsCount);
         } catch (Exception e) {
@@ -59,7 +48,27 @@ public class Day2RedNosedReport {
         }
     }
 
-    public static Integer asInt(String str) {
-        return Integer.parseInt(str);
+    public static Boolean isReportSafe(List<Integer> reportResults){
+        if (reportResults.stream().allMatch(
+            level -> level >= 1 & level <= 3 
+        ))
+            return true;
+
+        if (reportResults.stream().allMatch(
+            level -> level <= -1 & level >= -3 
+        ))
+            return true;
+
+        return false;
+    }
+
+
+    public static List<Integer> getReportResults(List<Integer> report){
+        List<Integer> results = new ArrayList<>();
+        for (int i = 0; i < report.size() - 1; i ++){
+            var diff = report.get(i) - report.get(i + 1);
+            results.add(diff);       
+        }
+        return results;        
     }
 }
